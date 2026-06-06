@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build -trimpath ./...
+
+      - name: Docker build
+        run: docker build -t sumi-smoke .
+
+      - name: Smoke test — container serves the landing page
+        run: |
+          set -euo pipefail
+
+          mkdir -p /tmp/sumi-ci/config /tmp/sumi-ci/books
+          cat > /tmp/sumi-ci/config/config.yml <<'YAML'
+          app:
+            port: 8085
+            ui_password: "ci-smoke-test"
+            jwt_secret: "ci-smoke-secret"
+          libraries:
+            - friendly_name: "Books"
+              path: "/data/books"
+          YAML
+
+          docker run -d --rm --name sumi-smoke \
+            -p 8085:8085 \
+            -v /tmp/sumi-ci/config:/app/config:ro \
+            -v /tmp/sumi-ci/books:/data/books:ro \
+            sumi-smoke
+
+          for i in $(seq 1 30); do
+            if curl -fs -o /dev/null http://localhost:8085/; then
+              echo "sumi is up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+          body=$(curl -fsS http://localhost:8085/)
+          grep -q '<title>sumi' <<< "$body" \
+            || { echo "::error::landing page missing <title>sumi"; exit 1; }
+          grep -q 'id="login-form"' <<< "$body" \
+            || { echo "::error::landing page missing id=login-form"; exit 1; }
+          echo "landing page present ✓"
+
+      - name: Container logs
+        if: always()
+        run: docker logs sumi-smoke || true
+
+      - name: Stop container
+        if: always()
+        run: docker stop sumi-smoke || true

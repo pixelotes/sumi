@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sumi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        a { color: #b0b0b0; text-decoration: none; }
+        a:hover { color: #fff; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; min-height: 100vh; }
+
+        /* --- Login --- */
+        #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        #login-form { background: #161616; border: 1px solid #222; border-radius: 12px; padding: 40px; width: 340px; text-align: center; }
+        #login-form h2 { font-size: 22px; margin-bottom: 24px; color: #fff; }
+        #login-form .logo-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+        #login-form input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 15px; margin-bottom: 16px; outline: none; }
+        #login-form input:focus { border-color: #8b6db8; }
+        #login-form button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #6a4f9c; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        #login-form button:hover { background: #7d5fb3; }
+        #login-error { color: #ef5350; margin-top: 10px; font-size: 13px; }
+
+        /* --- Header --- */
+        header { padding: 20px 0 10px; }
+        .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .header-logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; color: #fff; white-space: nowrap; cursor: pointer; }
+        #search-input { flex: 1; padding: 10px 16px; border-radius: 8px; border: 1px solid #333; background: #161616; color: #fff; font-size: 14px; outline: none; }
+        #search-input:focus { border-color: #8b6db8; }
+        .logout-btn { font-size: 13px; color: #888; cursor: pointer; padding: 8px 12px; }
+        .logout-btn:hover { color: #fff; }
+        #breadcrumb { font-size: 13px; color: #888; padding: 4px 0 12px; border-bottom: 1px solid #1a1a1a; }
+        #breadcrumb a { color: #aaa; cursor: pointer; }
+        #breadcrumb a:hover { color: #fff; }
+        #breadcrumb .sep { margin: 0 6px; color: #444; }
+
+        /* --- Folder header --- */
+        .folder-header { padding: 20px 0 8px; display: flex; align-items: center; gap: 12px; }
+        .folder-header h2 { font-size: 24px; font-weight: 700; color: #fff; }
+        .back-btn { color: #888; font-size: 24px; cursor: pointer; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.06); transition: all 0.2s; flex-shrink: 0; }
+        .back-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+
+        /* --- Controls --- */
+        .controls-bar { display: flex; align-items: center; padding: 8px 0; }
+        .view-toggle { display: inline-flex; border: 1px solid #333; border-radius: 6px; overflow: hidden; margin-left: auto; }
+        .view-toggle button { background: none; border: none; color: #666; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; }
+        .view-toggle button.active { background: #222; color: #fff; }
+        .view-toggle button:hover { color: #aaa; }
+        .view-toggle svg { width: 16px; height: 16px; }
+
+        /* --- File grid --- */
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding: 16px 0 40px; }
+        .file-item { background: #141414; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+        .file-item:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .item-poster { aspect-ratio: 2/3; background: #1a1a1a; display: flex; align-items: center; justify-content: center; color: #444; font-size: 32px; overflow: hidden; position: relative; }
+        .item-poster img { width: 100%; height: 100%; object-fit: cover; }
+        .item-info { padding: 10px; }
+        .item-name { font-size: 13px; font-weight: 600; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-sub { font-size: 11px; color: #777; margin-top: 2px; }
+        .progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: #8b6db8; }
+
+        /* --- List view --- */
+        .file-grid.list-view { grid-template-columns: 1fr; gap: 4px; }
+        .file-grid.list-view .file-item { display: flex; align-items: center; border-radius: 6px; background: #111; padding: 0; }
+        .file-grid.list-view .file-item:hover { transform: none; box-shadow: none; background: #1a1a1a; }
+        .file-grid.list-view .item-poster { aspect-ratio: 2/3; width: 48px; flex-shrink: 0; border-radius: 4px; font-size: 16px; }
+        .file-grid.list-view .item-info { flex: 1; padding: 8px 12px; min-width: 0; }
+        .file-grid.list-view .item-name { white-space: normal; font-size: 14px; }
+        .file-grid.list-view .progress-bar { position: static; height: 2px; margin-top: 4px; }
+
+        .empty-state { padding: 40px 0; text-align: center; color: #666; font-size: 14px; }
+
+        /* --- Toast --- */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 10000; animation: slideIn 0.3s ease-out; }
+        .toast-success { background: #3a2659; color: #d6c3f0; }
+        .toast-error { background: #5f1e1e; color: #edaaaa; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- Loading --- */
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #333; border-top-color: #8b6db8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 14px; color: #aaa; }
+
+        /* --- Reader --- */
+        #reader-screen { display: none; position: fixed; inset: 0; background: #ece6da; color: #222; z-index: 50; flex-direction: column; }
+        #reader-screen.dark { background: #1a1a1a; color: #ddd; }
+        #reader-screen.visible { display: flex; }
+        .reader-toolbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(0,0,0,0.04); border-bottom: 1px solid rgba(0,0,0,0.08); }
+        #reader-screen.dark .reader-toolbar { background: rgba(255,255,255,0.05); border-bottom-color: rgba(255,255,255,0.1); }
+        .reader-toolbar button { background: none; border: 1px solid currentColor; opacity: 0.7; color: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .reader-toolbar button:hover { opacity: 1; }
+        .reader-title { flex: 1; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .reader-progress { font-size: 12px; opacity: 0.6; min-width: 60px; text-align: right; }
+        #viewer { flex: 1; position: relative; overflow: hidden; }
+        .nav-zone { position: absolute; top: 0; bottom: 0; width: 20%; cursor: pointer; z-index: 10; }
+        .nav-zone.prev { left: 0; }
+        .nav-zone.next { right: 0; }
+
+        /* --- Reader settings panel --- */
+        #settings-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 300px; background: #f5f0e6; color: #222; border-left: 1px solid rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.18s ease; z-index: 20; overflow-y: auto; padding: 16px 18px; font-size: 13px; }
+        #reader-screen.dark #settings-panel { background: #1f1f1f; color: #ddd; border-left-color: rgba(255,255,255,0.08); }
+        #settings-panel.visible { transform: translateX(0); }
+        #settings-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.5; margin: 18px 0 8px; font-weight: 600; }
+        #settings-panel h3:first-child { margin-top: 0; }
+        .settings-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .settings-row button { background: transparent; border: 1px solid currentColor; opacity: 0.6; color: inherit; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .settings-row button:hover { opacity: 1; }
+        .settings-row button.active { opacity: 1; background: rgba(139, 109, 184, 0.18); border-color: #8b6db8; }
+        .size-controls { display: flex; align-items: center; gap: 10px; }
+        .size-controls button { width: 32px; height: 32px; padding: 0; font-size: 14px; }
+        .size-display { font-variant-numeric: tabular-nums; min-width: 48px; text-align: center; }
+        #toc-list { font-size: 13px; line-height: 1.5; max-height: 60vh; overflow-y: auto; }
+        #toc-list ul { list-style: none; padding-left: 14px; }
+        #toc-list > ul { padding-left: 0; }
+        #toc-list a { color: inherit; opacity: 0.75; cursor: pointer; display: block; padding: 3px 0; border-radius: 3px; }
+        #toc-list a:hover { opacity: 1; color: #8b6db8; }
+    </style>
+</head>
+<body>
+    <div id="login-screen" class="container">
+        <form id="login-form">
+            <span class="logo-icon">&#128395;</span>
+            <h2>sumi</h2>
+            <input type="password" id="password-input" placeholder="Password" required>
+            <button type="submit">Sign In</button>
+            <p id="login-error"></p>
+        </form>
+    </div>
+
+    <div id="app-container" class="container" style="display: none;">
+        <header>
+            <div class="header-bar">
+                <div class="header-logo" onclick="window.sumiApp.goHome()">
+                    &#128395; sumi
+                </div>
+                <input type="text" id="search-input" placeholder="Filter current folder...">
+                <span class="logout-btn" onclick="window.sumiApp.logout()">Sign out</span>
+            </div>
+            <div id="breadcrumb"></div>
+        </header>
+
+        <div id="folder-header"></div>
+        <div id="controls-bar" class="controls-bar" style="display:none;">
+            <div class="view-toggle">
+                <button id="view-grid" class="active" onclick="window.sumiApp.setView('grid')" title="Grid view">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                </button>
+                <button id="view-list" onclick="window.sumiApp.setView('list')" title="List view">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="file-browser" class="file-grid"></div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Loading...</div>
+    </div>
+
+    <div id="reader-screen">
+        <div class="reader-toolbar">
+            <button onclick="window.sumiApp.closeReader()" title="Back to library">← Library</button>
+            <div class="reader-title" id="reader-title">—</div>
+            <button onclick="window.sumiApp.toggleSettings()" title="Reading settings">⚙</button>
+            <button onclick="window.sumiApp.toggleReaderTheme()" title="Toggle theme">🌓</button>
+            <div class="reader-progress" id="reader-progress">0%</div>
+        </div>
+        <div id="viewer">
+            <div class="nav-zone prev" onclick="window.sumiApp.prevPage()"></div>
+            <div class="nav-zone next" onclick="window.sumiApp.nextPage()"></div>
+            <aside id="settings-panel">
+                <h3>Font</h3>
+                <div class="settings-row" id="font-family-row">
+                    <button data-font="">Default</button>
+                    <button data-font="Georgia, 'Times New Roman', serif">Georgia</button>
+                    <button data-font="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</button>
+                    <button data-font="Verdana, sans-serif">Verdana</button>
+                </div>
+
+                <h3>Size</h3>
+                <div class="size-controls">
+                    <button onclick="window.sumiApp.fontSizeDelta(-10)" title="Smaller">A−</button>
+                    <span class="size-display" id="font-size-display">100%</span>
+                    <button onclick="window.sumiApp.fontSizeDelta(10)" title="Larger">A+</button>
+                </div>
+
+                <h3>Chapters</h3>
+                <div id="toc-list"></div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- JSZip must come BEFORE epub.js; epub.min.js needs JSZip in the
+         global scope to unpack the .epub archive client-side. -->
+    <script src="/vendor/jszip.min.js"></script>
+    <script src="/vendor/epub.min.js"></script>
+    <script defer src="/js/app.js"></script>
+</body>
+</html>
